@@ -15,17 +15,20 @@ class TokenType(Enum):
     MUL = auto(); DIV = auto(); MOD = auto()
     PLUS_PLUS = auto(); DOT = auto()
     
-    # Block Logic (Our Greedy Tokens)
+    # Block Logic
     COLON = auto(); D_COLON = auto()        # : and ::
     STMT_END = auto(); CLASS_END = auto()  # ; and ;;
     
     LPAREN = auto(); RPAREN = auto()
-    EOF = auto() # End of File
+    EOF = auto()
 
 class Token:
-    def __init__(self, type, value=None):
+    def __init__(self, type, value, line, column):
         self.type = type
         self.value = value
+        self.line = line
+        self.column = column
 
     def __repr__(self):
-        return f"Token({self.type}, {repr(self.value)})"
+        # Professional formatting: [Line:Col] Type: Value
+        return f"[{self.line}:{self.column}] {self.type.name}: {repr(self.value)}"

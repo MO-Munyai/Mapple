@@ -12,4 +12,4 @@ print("You are " + age.str + " years old.");
 print("You weigh " + weight.str + " kgs");
 
 
-//run 4
+//run 7
