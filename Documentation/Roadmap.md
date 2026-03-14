@@ -1,6 +1,6 @@
 # Compiled Programming Language Roadmap
 
-## Phase 1: Language Design
+## Phase 1: Language Design (Completed ✅)
 - Decide syntax and semantics (Python-like, simple, compiled language).
 - Features for v1: `let` variables, integers, arithmetic (`+ - * /`), `print`.
 - Create a formal spec document with grammar and rules.
