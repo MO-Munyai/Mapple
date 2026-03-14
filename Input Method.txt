@@ -1,0 +1,104 @@
+class input::
+	
+	let str terminalValue = <value written>; (figure out how)
+
+	let str terminalMessage = "()"; 
+	
+	func terminalMessage(let str message):
+		print(message);
+	;
+	
+	func .str: 
+		let str objectValue = terminalValue;
+		return objectValue;
+	;
+	
+	
+	func .int:
+		/*
+			Read from the terminal (need to figure out how)
+			store the value by default to string 
+			to not create a seperate method yet for toInt (but we need to make them for all primitive/base data types)
+			loop through each character then store the value of each character in relation to the total length of the string input
+			add the value of each character thus generating the int value 
+			
+		*/
+		let str before_change = terminalValue;
+		
+		let char variable; 
+		
+		for(let int a = 0; a < message.stringLength; a++):
+			for(let int b = 0; b < message.stringLength+1; b++):
+			
+		
+		let int messageValue = toInt(message);
+		
+		print(messageValue);
+		
+		//___________________________________________
+		return objectValue;
+	;
+	
+	
+	//num, char, bool **implement later
+;;
+
+
+---Notes and stuff ---
+
+let int age; //declaring , let there be an integer (whole number) object be created and be refferenced by a name (age)  
+age = 21; //intialize , we have an object here (int object... it expects to store a whole number), before modify and store another value inside 
+, what is the first value that will be stored inside) '=' whole ...since its a whole number object 
+
+ let int age = 21; // we do both declaration and initialization
+
+let int age = input().int
+
+let <data_type> <variable_name> = input.().<data_type>
+
+let int age = input.("Enter your age: ").int
+Enter your age: 17
+
+"17" = chars = 2
+2
+10s
+1s
+char1 = '1'
+int1 = 10 = 1 * 10; (because its in the 10s , you multiply by 10)
+char2 = '1'
+int2 7; 
+
+total = all the intx
+= 10 + 7 
+total = 17
+
+print(age);
+17
+
+let <data_type> <variable_name> = input.<data_type>
+
+let int age;
+age = input.int
+
+214 (its a string (which is a linked list of characters) not numbers {yet})
+
+"214" = char = 3
+3
+100s
+10s
+1s
+
+char1 = 2
+int1 = 2 * 100 = 200
+
+char2 = 1
+int2 = 1 * 10 = 10
+
+char3 = 4
+int3 = 4 *1 = 4
+
+total = int1 + int2 + int3 
+<refference> = total
+age = total 
+
+age = 214
