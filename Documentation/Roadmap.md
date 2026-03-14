@@ -6,13 +6,13 @@
 - Create a formal spec document with grammar and rules.
 - Merge Phase 4 semantic analysis here: variable declaration checks, type checks.
 
-## Phase 2: Lexer / Tokenizer
+## Phase 2: Lexer / Tokenizer (Completed ✅)
 - Build your own lexer: split source code into tokens.
 - Tokens: keywords (`let`, `print`), identifiers, numbers, operators, symbols.
 - Ignore whitespace and comments.
 - Output: token stream for parser.
 
-## Phase 3: Parser
+## Phase 3: Parser (Completed ✅)
 - Build your own parser (recursive descent recommended).
 - Convert tokens into an AST (Abstract Syntax Tree).
 - AST represents structure: operations, variables, statements.
