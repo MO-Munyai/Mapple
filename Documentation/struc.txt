@@ -1,0 +1,14 @@
+Mapple/
+│
+├── src/
+│   ├── main.py          # Entry point (The 'mylangc' logic)
+│   ├── lexer.py         # Character-by-character scanner
+│   ├── tokens.py        # Token definitions and types
+│   ├── parser.py        # Phase 3 (Placeholder for now)
+│   └── ast_nodes.py     # Phase 3 (Placeholder for now)
+│
+├── examples/
+│   └── test_script.mp   # Your test code [cite: 85]
+│
+└── docs/
+    └── spec_v0.4.md     # Our signed-off rules

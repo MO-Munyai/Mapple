@@ -23,12 +23,16 @@ class input::
 			add the value of each character thus generating the int value 
 			
 		*/
-		let str before_change = terminalValue;
+		let str user_terminalValue = terminalValue;
 		
-		let char variable; 
+		let int user_terminalValue_Length = user_terminalValue.stringLength;
 		
-		for(let int a = 0; a < message.stringLength; a++):
-			for(let int b = 0; b < message.stringLength+1; b++):
+		let int objectValue;
+		
+		let char variablePlacement; 
+		
+		for(let int a = 0; a < user_terminalValue_Length; a++):
+			for(let int b = 0; b < user_terminalValue_Length + 1; b++):
 			
 		
 		let int messageValue = toInt(message);
@@ -36,6 +40,7 @@ class input::
 		print(messageValue);
 		
 		//___________________________________________
+		
 		return objectValue;
 	;
 	
