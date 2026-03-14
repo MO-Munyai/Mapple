@@ -1,5 +1,6 @@
 import sys
 from lexer import Lexer
+from parser import Parser
 
 def run_compiler():
     # 1. Check if the user provided a file path
@@ -14,24 +15,27 @@ def run_compiler():
         with open(file_path, 'r') as file:
             source_code = file.read()
 
-        # 3. Initialize our Scanner (Lexer)
+        # 3. Lexical Analysis (Tokens)
         lexer = Lexer(source_code)
-        
-        # 4. Generate the tokens
         tokens = lexer.scan_tokens()
 
-        # 5. Print the results for debugging
         print(f"\n--- Compiling: {file_path} ---")
-        print("Token Stream Generated:")
-        for token in tokens:
-            print(f"  {token}")
         
-        print("\nLexical Analysis Successful!")
+        # 4. Parsing (Tree)
+        parser = Parser(tokens)
+        ast = parser.parse()
+
+        print("Abstract Syntax Tree (AST) Generated:")
+        for node in ast:
+            print(f"  {node}")
+        
+        print("\nParsing Successful!")
 
     except FileNotFoundError:
         print(f"Error: Could not find file '{file_path}'")
     except Exception as e:
-        print(f"An error occurred during Lexing: {e}")
+        # This will catch Syntax Errors from the parser
+        print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     run_compiler()
