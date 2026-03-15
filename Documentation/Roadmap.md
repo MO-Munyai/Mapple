@@ -1,66 +1,36 @@
-# Compiled Programming Language Roadmap
+# Mapple (MPPL) Compiler Roadmap
 
 ## Phase 1: Language Design (Completed ✅)
-- Decide syntax and semantics (Python-like, simple, compiled language).
-- Features for v1: `let` variables, integers, arithmetic (`+ - * /`), `print`.
-- Create a formal spec document with grammar and rules.
-- Merge Phase 4 semantic analysis here: variable declaration checks, type checks.
+- Syntax & Semantics: Established a hybrid Python/Java style (let keyword, strict types, ; terminators).
+- Grammar: Defined formal rules for variables, arithmetic, and UOM method calls.
+- Formal Spec: Created the foundation for the Mapple Identity.
 
 ## Phase 2: Lexer / Tokenizer (Completed ✅)
-- Build your own lexer: split source code into tokens.
-- Tokens: keywords (`let`, `print`), identifiers, numbers, operators, symbols.
-- Ignore whitespace and comments.
-- Output: token stream for parser.
+- Scanning: Successfully breaking source code into meaningful tokens.
+- Advanced Logic: Implemented "Greedy" scanning for :: and ;;.
+- Debugging: Added Line and Column tracking for precise error reporting.
 
 ## Phase 3: Parser (Completed ✅)
-- Build your own parser (recursive descent recommended).
-- Convert tokens into an AST (Abstract Syntax Tree).
-- AST represents structure: operations, variables, statements.
-- Example AST: Assign(x, Add(Number(5), Number(3))).
+- Engine: Built a Recursive Descent parser.
+- Structure: Converts flat tokens into a hierarchical Abstract Syntax Tree (AST).
+- Features: Handles variable declarations, print calls, and method chaining.
 
-## Phase 4: Semantic Analysis (Merged with Phase 1)
-- Ensure variables are declared before use.
-- Check types and operation validity.
-- Maintain symbol tables.
+## Phase 4: Semantic Analysis (Completed ✅)
+- Symbol Table: Tracks variable names, types, and existence.
+- Type Safety: Enforces strict rules (e.g., preventing str + int).
+- Validation: Ensures "Declaration Before Use" and valid UOM method access.
 
-## Phase 5: Code Generation / Backend
-- Options for compiling:
-  1. Use LLVM as backend to generate machine code.
-  2. Compile to C code and use `gcc/clang`.
-  3. Build a VM and generate bytecode (easier for early stages).
-- For first version, LLVM or C code generation is practical.
+## Phase 5: Code Generation / Backend 
+- Strategy: Transpilation to Python 3.
+- Translates Mapple AST nodes into equivalent Python code.
+- Implements UOM (Uniform Object Model) by wrapping variables in Python type-casters (int(), str()).
+- Next Up: Implementing logic for Control Flow (if, while) and Assignment fixes.
 
 ## Phase 6: Runtime & Standard Library
-- Minimal runtime: `print()` mapping to system calls.
-- Expandable later: I/O, math functions, arrays, strings.
+- v0.1: Leverages Python's built-in print() and input().
+- v0.2 Plan: Add file I/O and more advanced string manipulation methods.
 
 ## Phase 7: CLI / Build & Run
-- Create a compiler script `mylangc`.
-- Example workflow:
-  ```bash
-  mylangc examples/hello.me
-  ./hello
-  ```
-- `mylangc` handles lexing, parsing, code generation, and produces an executable.
-
-## Repo Setup
-- Possible structure:
-```
-language/
-  docs/
-    spec.md
-    roadmap.md
-  src/
-    lexer.py
-    parser.py
-    ast.py
-    codegen.py
-    main.py
-  examples/
-    hello.me
-  tests/
-  scripts/
-    mylangc
-  README.md
-  LICENSE
-```
+- Command: Created the mppl (Windows .bat) tool.
+- Workflow: One-shot command that Lexes, Parses, Analyzes, Generates, and Instantly Executes the code.
+- Integration: Added to System PATH for global access.
