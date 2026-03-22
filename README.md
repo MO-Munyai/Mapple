@@ -15,3 +15,18 @@ Create a file named `hello.mp`:
 ```mapple
 let str name = input("What is your name? ").str;
 print("Hello " + name);
+
+
+## 📋 Requirements
+- **Python 3.10 or higher**: Must be installed and added to your system PATH.
+
+## 💻 Installation
+### Windows
+1. Add the `MPPL` folder to your Environment Variables (PATH).
+2. Run `mppl script.mp`.
+
+### macOS / Linux
+1. Open terminal in the `MPPL` folder.
+2. Run `chmod +x mppl`.
+3. Add the folder to your path in `.zshrc` or `.bashrc`.
+4. Run `./mppl script.mp`.
