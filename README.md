@@ -16,7 +16,6 @@ Create a file named `hello.mp`:
 let str name = input("What is your name? ").str;
 print("Hello " + name);
 
-
 ## 📋 Requirements
 - **Python 3.10 or higher**: Must be installed and added to your system PATH.
 
@@ -30,3 +29,5 @@ print("Hello " + name);
 2. Run `chmod +x mppl`.
 3. Add the folder to your path in `.zshrc` or `.bashrc`.
 4. Run `./mppl script.mp`.
+
+_________________________________________________________________________________________
