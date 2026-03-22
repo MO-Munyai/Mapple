@@ -30,3 +30,6 @@ print("Hello " + name);
 
 4. **Run `mppl script.mp`.** 
 _________________________________________________________________________________________
+
+# If something breaks run:
+- mppl --doctor
