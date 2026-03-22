@@ -1,0 +1,1 @@
+- fix the mac setup and files
