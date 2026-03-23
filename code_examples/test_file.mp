@@ -11,5 +11,4 @@ print("You are " + age.str + " years old.");
 print("You weigh " + weight.str + " kgs");
 
 
-//run 9
 //investigate why it ran without ; 

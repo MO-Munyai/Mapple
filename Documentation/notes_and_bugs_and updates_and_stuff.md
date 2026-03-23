@@ -1,1 +1,2 @@
 - fix the mac setup and files
+- write --show-python flag to print Python code to terminal before running
