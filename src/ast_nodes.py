@@ -44,6 +44,12 @@ class VarDeclNode(ASTNode):
     def __repr__(self):
         return f"VarDecl({self.var_type} {self.name} = {self.initializer})"
 
+class AssignmentNode(ASTNode):
+    """Represents '<name> = <value>;'"""
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
 class PrintNode(ASTNode):
     """Represents 'print(...);'"""
     def __init__(self, expression):
