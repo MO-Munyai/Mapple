@@ -50,6 +50,9 @@ class AssignmentNode(ASTNode):
         self.name = name
         self.value = value
 
+    def __repr__(self):
+        return f"AssignmentNode({self.name}, {self.value!r})"
+
 class PrintNode(ASTNode):
     """Represents 'print(...);'"""
     def __init__(self, expression):
