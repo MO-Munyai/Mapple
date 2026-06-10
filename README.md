@@ -861,20 +861,205 @@ This creates or overwrites:
 code_examples\hello_world_output.py
 ```
 
-## Practical Roadmap
+## Development Phases
 
-The next high-value engineering work is:
+The next focused work is organized into six implementation phases. This section should be updated whenever a phase is completed so the README continues to reflect the real compiler status.
 
-1. Add an automated test suite for lexer, parser, semantic analyzer, generator, and CLI behavior.
-2. Replace placeholder strings for classes, functions, and assignments with real AST nodes.
-3. Implement assignment end to end.
-4. Add proper source diagnostics with line and column reporting throughout all phases.
-5. Fix conversion table direction and add tests for every allowed and rejected conversion.
-6. Decide whether semicolons are mandatory and enforce that rule consistently.
-7. Implement operator precedence and the remaining arithmetic operators.
-8. Remove emoji from CLI output or explicitly configure UTF-8-safe output.
-9. Harden install scripts to avoid PATH duplication and shell-specific assumptions.
-10. Add scoped symbol tables before implementing real functions and classes.
+Status legend:
+
+- `Current` means this is the active focus.
+- `Planned` means work has not started or is not complete enough to document as supported.
+- `Complete` means the feature works end to end through lexing, parsing, semantic analysis, code generation, examples, and tests or repeatable manual verification.
+
+### Phase 1: Assignment
+
+Status: `Current`
+
+Goal: make reassignment work as a first-class language feature.
+
+Current state:
+
+- Declaration with initialization works:
+
+```mapple
+let int age = 21;
+```
+
+- Plain assignment is only partially parsed:
+
+```mapple
+age = 22;
+```
+
+- The parser currently returns a string placeholder for assignments instead of a real AST node.
+- The semantic analyzer does not validate assignment target existence or assignment value type.
+- The code generator does not emit Python assignment code for reassignment.
+
+Completion criteria:
+
+- Add a real `AssignmentNode`.
+- Parse `name = expression;` into that node.
+- Require the assignment target to already be declared.
+- Require assigned value type to match the declared variable type.
+- Generate Python assignment output.
+- Add examples showing valid assignment and rejected type mismatch.
+- Update this README from `Current` to `Complete` when done.
+
+### Phase 2: Control Flow
+
+Status: `Planned`
+
+Goal: add decision-making and loops.
+
+Expected scope:
+
+- `if`
+- `else`
+- comparison operators
+- boolean expressions
+- likely `while` before `for`
+- block parsing rules
+
+Current state:
+
+- No control-flow keywords are implemented.
+- No comparison operators are tokenized or parsed.
+- `bool` appears in semantic conversion planning but is not a complete language type yet.
+
+Completion criteria:
+
+- Define exact syntax for control-flow blocks.
+- Implement lexer tokens for required keywords and operators.
+- Add AST nodes for conditionals and loops.
+- Add semantic checks for boolean conditions.
+- Generate valid Python control-flow code with correct indentation.
+- Add examples and verification coverage.
+- Update this README when control flow is supported.
+
+### Phase 3: Arrays
+
+Status: `Planned`
+
+Goal: add ordered collections.
+
+Expected scope:
+
+- array literal syntax
+- typed array declarations
+- indexing
+- assignment to array elements
+- length or count access
+- possibly append/remove operations later
+
+Current state:
+
+- No array/list tokenization, parsing, semantic model, or code generation exists.
+- There is no generic type syntax yet.
+
+Completion criteria:
+
+- Decide array type syntax.
+- Implement array literals and index access.
+- Enforce element type consistency.
+- Generate Python list-backed output.
+- Add examples for declaration, read, write, and invalid type usage.
+- Update this README when arrays are supported.
+
+### Phase 4: Functions
+
+Status: `Planned`
+
+Goal: implement user-defined functions end to end.
+
+Current state:
+
+- `func` and `return` are tokenized.
+- Function syntax is partially parsed.
+- Parameters are skipped.
+- Function declarations currently become string placeholders instead of real AST nodes.
+- Function code is not generated.
+- There is no function scope.
+- Function calls are only meaningfully implemented for built-in `input`.
+
+Completion criteria:
+
+- Add real function declaration, parameter, call, and return AST nodes.
+- Implement parameter parsing with types.
+- Add function symbol table entries.
+- Add scoped local variables.
+- Validate argument count and argument types.
+- Validate return type behavior.
+- Generate Python `def` functions.
+- Add examples and verification coverage.
+- Update this README when functions are supported.
+
+### Phase 5: Modules
+
+Status: `Planned`
+
+Goal: split Mapple programs across files.
+
+Expected scope:
+
+- module/import syntax
+- source file resolution
+- symbol visibility rules
+- duplicate module handling
+- generated Python organization
+
+Current state:
+
+- The compiler reads exactly one input source file.
+- There is no import syntax.
+- There is no module namespace model.
+- There is no package or dependency resolution system.
+
+Completion criteria:
+
+- Define module syntax and lookup rules.
+- Load multiple `.mp` files safely.
+- Prevent circular import failures or report them clearly.
+- Add module-level symbol tables.
+- Generate executable Python for multi-file programs.
+- Add examples covering imports and module boundaries.
+- Update this README when modules are supported.
+
+### Phase 6: Classes
+
+Status: `Planned`
+
+Goal: implement user-defined classes after functions and modules are stable.
+
+Current state:
+
+- `class`, `::`, and `;;` are tokenized.
+- Class blocks are partially parsed.
+- Class declarations currently become string placeholders instead of real AST nodes.
+- Class bodies are not semantically modeled.
+- No Python class output is generated.
+
+Completion criteria:
+
+- Add real class, field, method, constructor, and member access AST nodes.
+- Define object construction syntax.
+- Add class symbol tables and instance member lookup.
+- Validate field and method access.
+- Generate Python classes.
+- Add examples and verification coverage.
+- Update this README when classes are supported.
+
+### Supporting Work Across All Phases
+
+These items support the six focused phases and should be handled when they become necessary for the active phase:
+
+1. Add automated tests for lexer, parser, semantic analyzer, generator, and CLI behavior.
+2. Replace placeholder parser outputs with real AST nodes.
+3. Add proper source diagnostics with line and column reporting throughout all compiler phases.
+4. Fix conversion table direction and add tests for every allowed and rejected conversion.
+5. Decide whether semicolons are mandatory and enforce that rule consistently.
+6. Implement operator precedence as soon as expressions grow beyond the current simple `+` behavior.
+7. Remove emoji from CLI output or explicitly configure UTF-8-safe output.
+8. Harden install scripts to avoid PATH duplication and shell-specific assumptions.
 
 ## Project Status
 
