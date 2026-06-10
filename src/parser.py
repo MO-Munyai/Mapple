@@ -113,7 +113,9 @@ class Parser:
         if self.peek().type == TokenType.ASSIGN:
             self.eat(TokenType.ASSIGN)
             right = self.parse_expression()
-            return f"Assignment({left} = {right})"
+            if not isinstance(left, VarAccessNode):
+                raise Exception(f"Syntax Error: Invalid assignment target '{left}'")
+            return AssignmentNode(left.name, right)
         
         if self.peek().type == TokenType.PLUS:
             op = self.eat(TokenType.PLUS)
