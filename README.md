@@ -754,7 +754,8 @@ Runtime errors from generated Python are not wrapped in a Mapple-specific diagno
 - Initialization works for supported expression types.
 - Assignment parsing is implemented and produces a real `AssignmentNode`.
 - Declaration-before-assignment is enforced by the semantic analyzer.
-- Assignment type compatibility and code generation are still pending.
+- Assignment type compatibility is enforced for declared variables.
+- Assignment code generation is implemented.
 - Uninitialized variables generate `None`, even when declared as `int`, `num`, or `str`.
 - There is no runtime enforcement after code generation.
 
@@ -874,36 +875,31 @@ Status legend:
 
 ### Phase 1: Assignment
 
-Status: `Current`
+Status: `Complete`
 
 Goal: make reassignment work as a first-class language feature.
 
 Current state:
 
-- Declaration with initialization works:
-
-```mapple
-let int age = 21;
-```
-
-- Plain assignment parses into a real AST node:
-
-```mapple
-age = 22;
-```
-
+- Declaration with initialization works.
+- Plain assignment parses into a real AST node.
 - The parser produces `AssignmentNode` objects.
-- The semantic analyzer now rejects assignment to undeclared names.
-- The code generator still does not emit Python assignment code for reassignment.
+- The semantic analyzer rejects assignment to undeclared names.
+- The semantic analyzer rejects assignment type mismatches.
+- The code generator emits Python assignment statements for valid assignments.
+- Regression examples are included in `code_examples/`.
 
-Completion criteria:
+Supported examples:
 
-- `AssignmentNode` exists and the parser emits it.
-- The assignment target must already be declared.
-- Require assigned value type to match the declared variable type.
-- Generate Python assignment output.
-- Add examples showing valid assignment and rejected type mismatch.
-- Update this README from `Current` to `Complete` when done.
+- [`code_examples/assignment_basic.mp`](code_examples/assignment_basic.mp)
+- [`code_examples/assignment_type_error.mp`](code_examples/assignment_type_error.mp)
+- [`code_examples/assignment_undeclared.mp`](code_examples/assignment_undeclared.mp)
+
+Behavior:
+
+- `let int age = 20; age = age + 1; print(age.str);` compiles and runs.
+- `age = 10;` fails because `age` was never declared.
+- `let int age = 10; age = "hello";` fails because the assignment type does not match.
 
 ### Phase 2: Control Flow
 

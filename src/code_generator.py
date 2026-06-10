@@ -1,3 +1,4 @@
+from tokens import TokenType
 from ast_nodes import *
 
 class CodeGenerator:
@@ -27,10 +28,16 @@ class CodeGenerator:
         val = self.visit(node.initializer) if node.initializer else "None"
         return f"{node.name} = {val}"
 
+    def visit_AssignmentNode(self, node):
+        value = self.visit(node.value)
+        return f"{node.name} = {value}"
+
     def visit_LiteralNode(self, node):
-        # Strings need quotes, numbers don't
-        if isinstance(node.value, str):
+        # Emit source-shaped Python literals based on the original token type.
+        if node.token.type == TokenType.STR_LIT:
             return f'"{node.value}"'
+        if node.token.type == TokenType.CHAR_LIT:
+            return f"'{node.value}'"
         return str(node.value)
 
     def visit_VarAccessNode(self, node):

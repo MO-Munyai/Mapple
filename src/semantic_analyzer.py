@@ -77,7 +77,12 @@ class SemanticAnalyzer:
         if not target_type:
             raise Exception(f"Semantic Error: Variable '{node.name}' assigned before declaration.")
 
-        self.visit(node.value)
+        value_type = self.visit(node.value)
+        if value_type != target_type:
+            raise Exception(
+                f"Type Mismatch: Cannot assign {value_type} to {target_type} variable '{node.name}'."
+            )
+
         return target_type
 
     def visit_BinaryOpNode(self, node):
