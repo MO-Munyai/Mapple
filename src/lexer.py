@@ -83,30 +83,56 @@ class Lexer:
             elif char == '(': self.add_token(TokenType.LPAREN, "(")
             elif char == ')': self.add_token(TokenType.RPAREN, ")")
 
+            else:
+                raise Exception(
+                    f"Lexer Error: Unexpected character '{char}' "
+                    f"(line {self.line}, column {self.column - 1})."
+                )
+
         self.add_token(TokenType.EOF, "EOF")
         return self.tokens
 
     def add_string(self):
+        start_line = self.line
         value = ""
         while self.pos < len(self.source) and self.source[self.pos] != '"':
             value += self.advance()
-        if self.pos < len(self.source):
-            self.advance()
+        if self.pos >= len(self.source):
+            raise Exception(
+                f"Lexer Error: Unterminated string literal starting at line {start_line}."
+            )
+        self.advance()  # consume closing "
         self.add_token(TokenType.STR_LIT, value)
 
     def add_char(self):
-        value = self.advance() 
-        if self.pos < len(self.source) and self.source[self.pos] == "'":
-            self.advance()
+        start_line = self.line
+        if self.pos >= len(self.source):
+            raise Exception(
+                f"Lexer Error: Unterminated character literal at line {start_line}."
+            )
+        value = self.advance()
+        if self.pos >= len(self.source) or self.source[self.pos] != "'":
+            raise Exception(
+                f"Lexer Error: Unterminated or invalid character literal at line {start_line}. "
+                "Character literals must contain exactly one character enclosed in single quotes."
+            )
+        self.advance()  # consume closing '
         self.add_token(TokenType.CHAR_LIT, value)
 
     def add_number(self, first_digit):
         value = first_digit
-        is_num = False
+        dot_count = 0
+        start_line = self.line
         while self.pos < len(self.source) and (self.source[self.pos].isdigit() or self.source[self.pos] == '.'):
-            if self.source[self.pos] == '.': is_num = True
+            if self.source[self.pos] == '.':
+                dot_count += 1
+                if dot_count > 1:
+                    raise Exception(
+                        f"Lexer Error: Malformed numeric literal '{value}.' "
+                        f"at line {start_line}. A number can have at most one decimal point."
+                    )
             value += self.advance()
-        t_type = TokenType.NUM_LIT if is_num else TokenType.INT_LIT
+        t_type = TokenType.NUM_LIT if dot_count == 1 else TokenType.INT_LIT
         self.add_token(t_type, value)
 
     def add_identifier(self, first_char):

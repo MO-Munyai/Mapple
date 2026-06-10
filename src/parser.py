@@ -1,6 +1,8 @@
 from tokens import TokenType
 from ast_nodes import *
 
+_VALID_TYPE_TOKENS = {TokenType.INT_TYPE, TokenType.NUM_TYPE, TokenType.STR_TYPE}
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -75,9 +77,16 @@ class Parser:
         return f"FuncNode({name}, Body: {body})" # Placeholder for FuncNode
 
     def parse_declaration(self):
-        """let <type> <name> = <value>;[cite: 54, 55]."""
+        """let <type> <name> = <value>;"""
         self.eat(TokenType.LET)
-        var_type_token = self.advance() # Get 'int', 'str', etc.
+        type_token = self.peek()
+        if type_token.type not in _VALID_TYPE_TOKENS:
+            raise Exception(
+                f"Syntax Error at line {type_token.line}: "
+                f"Expected a type keyword (int, num, str) after 'let', "
+                f"got '{type_token.value}'."
+            )
+        var_type_token = self.advance()
         name = self.eat(TokenType.ID).value
         
         initializer = None

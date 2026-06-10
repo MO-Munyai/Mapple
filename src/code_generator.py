@@ -19,7 +19,14 @@ class CodeGenerator:
         return visitor(node)
 
     def generic_visit(self, node):
-        return "" # Ignore nodes we can't generate yet
+        # Placeholder strings returned by the parser for unimplemented constructs (class, func)
+        # are intentionally skipped until those AST nodes are fully implemented.
+        if isinstance(node, str):
+            return ""
+        raise Exception(
+            f"Code Generation Error: No generator implemented for node type "
+            f"'{type(node).__name__}'. This is an internal compiler error."
+        )
 
     # --- Generation Methods ---
 

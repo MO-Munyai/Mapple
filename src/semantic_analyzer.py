@@ -55,14 +55,19 @@ class SemanticAnalyzer:
         return node.var_type
 
     def visit_LiteralNode(self, node):
-        # Map token types to Mapple types [cite: 48]
         mapping = {
             TokenType.INT_LIT: "int",
             TokenType.STR_LIT: "str",
             TokenType.NUM_LIT: "num",
             TokenType.CHAR_LIT: "char"
         }
-        return mapping.get(node.token.type)
+        result = mapping.get(node.token.type)
+        if result is None:
+            raise Exception(
+                f"Semantic Error: Unrecognized literal token type '{node.token.type}' "
+                f"with value '{node.value}'."
+            )
+        return result
 
     def visit_VarAccessNode(self, node):
         # Check declaration before use
@@ -72,15 +77,24 @@ class SemanticAnalyzer:
         return var_type
 
     def visit_AssignmentNode(self, node):
-        # Enforce declaration-before-assignment before walking the value.
         target_type = self.symbol_table.lookup(node.name)
         if not target_type:
-            raise Exception(f"Semantic Error: Variable '{node.name}' assigned before declaration.")
+            raise Exception(
+                f"Semantic Error: Variable '{node.name}' assigned before declaration. "
+                f"Declare it first with 'let {'{type}'} {node.name} = ...;'."
+            )
 
         value_type = self.visit(node.value)
+        if value_type is None:
+            raise Exception(
+                f"Semantic Error: The expression assigned to '{node.name}' "
+                "has no resolvable type. Check the right-hand side expression."
+            )
         if value_type != target_type:
             raise Exception(
-                f"Type Mismatch: Cannot assign {value_type} to {target_type} variable '{node.name}'."
+                f"Type Mismatch: Cannot assign {value_type} to {target_type} "
+                f"variable '{node.name}'. Use a {target_type} expression, "
+                f"or convert with .{target_type}."
             )
 
         return target_type
@@ -90,6 +104,13 @@ class SemanticAnalyzer:
         right_type = self.visit(node.right)
         op = node.op.type
 
+        if left_type is None or right_type is None:
+            raise Exception(
+                f"Semantic Error: Cannot apply operator '{node.op.value}' — "
+                f"one or both operands have no resolvable type "
+                f"(left: {left_type}, right: {right_type})."
+            )
+
         if op == TokenType.PLUS:
             if left_type == "str" and right_type == "str":
                 return "str"
@@ -97,15 +118,18 @@ class SemanticAnalyzer:
                 return "int"
             if left_type == "num" and right_type == "num":
                 return "num"
-            
-            # If it reaches here, it's a mix (like str + int), so we CRASH.
-            raise Exception(f"Semantic Error: Cannot add {left_type} and {right_type}. Use .str!")
+            raise Exception(
+                f"Semantic Error: Cannot add {left_type} and {right_type}. "
+                "Both sides must be the same type. Use .str to convert first."
+            )
 
-        # Math Rules (Subtraction, Multiplication, etc.) [cite: 27]
         if op in [TokenType.MINUS, TokenType.MUL, TokenType.DIV, TokenType.MOD]:
             if left_type == right_type and left_type in ["int", "num"]:
                 return left_type
-            raise Exception(f"Semantic Error: Operator {node.op.value} requires matching numeric types.")
+            raise Exception(
+                f"Semantic Error: Operator '{node.op.value}' requires matching numeric types "
+                f"(int or num), got {left_type} and {right_type}."
+            )
 
     def visit_MemberAccessNode(self, node):
         """Handles UOM calls: age.str or input().int[cite: 74, 75]."""
