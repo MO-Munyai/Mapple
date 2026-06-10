@@ -60,6 +60,23 @@ Mapple/
     hello_world.mp
     hello_mapple.mp
     test_file.mp
+    assignment_basic.mp
+    assignment_expr_rhs.mp
+    assignment_str_reassign.mp
+    assignment_num_reassign.mp
+    assignment_multiple.mp
+    assignment_uom_rhs.mp
+    assignment_uninit.mp
+    assignment_type_error.mp
+    assignment_type_error_num_to_int.mp
+    assignment_type_error_int_to_str.mp
+    assignment_undeclared.mp
+    assignment_chain_error.mp
+    assignment_invalid_target.mp
+    lexer_error_unterminated_string.mp
+    lexer_error_bad_number.mp
+    lexer_error_unknown_char.mp
+    parser_error_bad_type.mp
   Documentation/
     Input Method.txt
     MPPL Spec Doc.docx
@@ -557,6 +574,7 @@ The parser is a recursive descent parser. Its `parse()` method reads statements 
 Currently parsed concrete AST nodes:
 
 - `VarDeclNode`
+- `AssignmentNode`
 - `PrintNode`
 - `LiteralNode`
 - `VarAccessNode`
@@ -564,11 +582,10 @@ Currently parsed concrete AST nodes:
 - `CallNode`
 - `MemberAccessNode`
 
-Partially parsed placeholders:
+Partially parsed placeholders (not real AST nodes):
 
 - classes
 - functions
-- assignments
 
 Classes and functions currently return string placeholders like:
 
@@ -577,7 +594,7 @@ ClassNode(Name, Body: ...)
 FuncNode(Name, Body: ...)
 ```
 
-Those placeholders are ignored by semantic analysis and code generation because they are not real AST node types.
+Those placeholders are skipped by semantic analysis and code generation. The code generator raises an error if it encounters any non-string node without a registered generator, so new node types cannot be accidentally silenced.
 
 ### 5. AST Nodes
 
@@ -586,9 +603,9 @@ Implemented in [`src/ast_nodes.py`](src/ast_nodes.py).
 The current AST model separates:
 
 - expressions: literals, variable access, binary operations, calls, member access
-- statements: variable declarations and print calls
+- statements: variable declarations, assignment, and print calls
 
-The AST is intentionally small. It is enough for the current language subset but not yet expressive enough for full control flow, scoped functions, classes, return statements, or assignments.
+The AST is intentionally small. It is enough for the current language subset but not yet expressive enough for full control flow, scoped functions, classes, or return statements.
 
 ### 6. Semantic Analysis
 
@@ -750,14 +767,15 @@ Runtime errors from generated Python are not wrapped in a Mapple-specific diagno
 
 ### Variables And Assignment
 
-- Declaration works.
-- Initialization works for supported expression types.
-- Assignment parsing is implemented and produces a real `AssignmentNode`.
-- Declaration-before-assignment is enforced by the semantic analyzer.
-- Assignment type compatibility is enforced for declared variables.
-- Assignment code generation is implemented.
-- Uninitialized variables generate `None`, even when declared as `int`, `num`, or `str`.
-- There is no runtime enforcement after code generation.
+- Declaration with initialization works.
+- Assignment parsing produces a real `AssignmentNode` (not a placeholder).
+- Declaration-before-assignment is enforced: assigning to an undeclared name is a semantic error.
+- Assignment type compatibility is enforced: the right-hand side must match the declared type.
+- Assignment code generation emits a Python assignment statement.
+- Uninitialized variables (`let int x;`) generate `None` in Python; they can be assigned before first use without error.
+- Chained assignment (`a = b = 5`) is rejected by the parser.
+- The left-hand side of an assignment must be a plain variable name; using a literal or expression on the left is a syntax error.
+- There is no runtime type enforcement after code generation.
 
 ### Functions
 
@@ -821,8 +839,8 @@ Runtime errors from generated Python are not wrapped in a Mapple-specific diagno
 - Code generation targets Python source only.
 - There is no standalone binary output.
 - There is no source map from generated Python back to Mapple lines.
-- Unknown AST nodes are silently ignored by `generic_visit`.
-- Placeholder parser outputs for classes and functions are ignored. Assignments now have a real AST node and semantic validation hook.
+- Placeholder parser outputs for classes and functions are ignored (they are plain Python strings, not real AST nodes).
+- Unknown AST node types cause a `Code Generation Error` rather than being silently ignored.
 - Generated files are written beside the source file and can overwrite previous generated output with the same name.
 
 ### CLI And Installation
@@ -835,20 +853,41 @@ Runtime errors from generated Python are not wrapped in a Mapple-specific diagno
 
 ### Testing
 
-- There is no automated test suite in the repository.
-- Current validation is manual through sample `.mp` files and `--show-python`.
-- There are no lexer unit tests, parser unit tests, semantic analyzer tests, code generator tests, or CLI integration tests.
+- There is no automated test runner. Validation is manual through sample `.mp` files and `--show-python`.
+- The `code_examples/` directory contains 20 `.mp` files covering happy paths and error cases for assignment, type errors, lexer errors, and parser errors.
+- There are no unit tests for lexer, parser, semantic analyzer, code generator, or CLI in isolation.
 - There is no CI configuration.
 
 ## Development Notes
 
-Useful manual checks:
+### Smoke tests (should all compile and run)
 
 ```powershell
 python src\main.py --version
 python src\main.py code_examples\hello_world.mp --show-python
 python src\main.py code_examples\hello_mapple.mp --show-python
-python src\main.py code_examples\test_file.mp --show-python
+python src\main.py code_examples\assignment_basic.mp --show-python
+python src\main.py code_examples\assignment_expr_rhs.mp --show-python
+python src\main.py code_examples\assignment_str_reassign.mp --show-python
+python src\main.py code_examples\assignment_num_reassign.mp --show-python
+python src\main.py code_examples\assignment_multiple.mp --show-python
+python src\main.py code_examples\assignment_uom_rhs.mp --show-python
+python src\main.py code_examples\assignment_uninit.mp --show-python
+```
+
+### Error tests (should all produce a COMPILER ERROR)
+
+```powershell
+python src\main.py code_examples\assignment_type_error.mp
+python src\main.py code_examples\assignment_type_error_num_to_int.mp
+python src\main.py code_examples\assignment_type_error_int_to_str.mp
+python src\main.py code_examples\assignment_undeclared.mp
+python src\main.py code_examples\assignment_chain_error.mp
+python src\main.py code_examples\assignment_invalid_target.mp
+python src\main.py code_examples\parser_error_bad_type.mp
+python src\main.py code_examples\lexer_error_unterminated_string.mp
+python src\main.py code_examples\lexer_error_bad_number.mp
+python src\main.py code_examples\lexer_error_unknown_char.mp
 ```
 
 Running without `--show-python` writes generated files:
@@ -877,29 +916,95 @@ Status legend:
 
 Status: `Complete`
 
-Goal: make reassignment work as a first-class language feature.
+Goal: make reassignment work as a first-class language feature end-to-end.
 
-Current state:
+Implemented:
 
-- Declaration with initialization works.
-- Plain assignment parses into a real AST node.
-- The parser produces `AssignmentNode` objects.
-- The semantic analyzer rejects assignment to undeclared names.
-- The semantic analyzer rejects assignment type mismatches.
-- The code generator emits Python assignment statements for valid assignments.
-- Regression examples are included in `code_examples/`.
+- The parser produces real `AssignmentNode` objects (not placeholder strings).
+- The semantic analyzer enforces declaration-before-assignment.
+- The semantic analyzer enforces assignment type compatibility.
+- The code generator emits Python assignment statements.
+- The lexer, parser, semantic analyzer, and code generator are all stricter (see [Stricter Validation](#stricter-validation) below).
 
-Supported examples:
+#### Happy Path Examples
 
-- [`code_examples/assignment_basic.mp`](code_examples/assignment_basic.mp)
-- [`code_examples/assignment_type_error.mp`](code_examples/assignment_type_error.mp)
-- [`code_examples/assignment_undeclared.mp`](code_examples/assignment_undeclared.mp)
+| File | What it tests | Expected output |
+|---|---|---|
+| [`assignment_basic.mp`](code_examples/assignment_basic.mp) | Reassign an int variable to a literal | `25` |
+| [`assignment_expr_rhs.mp`](code_examples/assignment_expr_rhs.mp) | RHS uses the variable in an expression | `21` |
+| [`assignment_str_reassign.mp`](code_examples/assignment_str_reassign.mp) | Reassign a str variable | `world` |
+| [`assignment_num_reassign.mp`](code_examples/assignment_num_reassign.mp) | Reassign a num variable | `9.81` |
+| [`assignment_multiple.mp`](code_examples/assignment_multiple.mp) | Multiple variables each reassigned | `10` then `hello` |
+| [`assignment_uom_rhs.mp`](code_examples/assignment_uom_rhs.mp) | UOM type conversion result on RHS | `20` |
+| [`assignment_uninit.mp`](code_examples/assignment_uninit.mp) | Assign to a variable declared without initializer | `99` |
 
-Behavior:
+Run a happy-path example:
 
-- `let int age = 20; age = age + 1; print(age.str);` compiles and runs.
-- `age = 10;` fails because `age` was never declared.
-- `let int age = 10; age = "hello";` fails because the assignment type does not match.
+```powershell
+python src\main.py code_examples\assignment_basic.mp --show-python
+```
+
+Expected generated Python:
+
+```python
+age = 20
+age = 25
+print(str(age))
+```
+
+#### Error Examples
+
+Each of these must produce a compiler error — not silently compile or produce wrong output.
+
+**Semantic errors (type and declaration)**
+
+| File | What it tests | Expected error |
+|---|---|---|
+| [`assignment_type_error.mp`](code_examples/assignment_type_error.mp) | Assign str to int variable | Type Mismatch |
+| [`assignment_type_error_num_to_int.mp`](code_examples/assignment_type_error_num_to_int.mp) | Assign num literal to int variable | Type Mismatch |
+| [`assignment_type_error_int_to_str.mp`](code_examples/assignment_type_error_int_to_str.mp) | Assign int literal to str variable | Type Mismatch |
+| [`assignment_undeclared.mp`](code_examples/assignment_undeclared.mp) | Assign to a name that was never declared | Semantic Error |
+
+**Syntax errors (parser)**
+
+| File | What it tests | Expected error |
+|---|---|---|
+| [`assignment_chain_error.mp`](code_examples/assignment_chain_error.mp) | Chained assignment `a = b = 5` | Syntax Error |
+| [`assignment_invalid_target.mp`](code_examples/assignment_invalid_target.mp) | Literal on left-hand side `5 = 20` | Syntax Error |
+| [`parser_error_bad_type.mp`](code_examples/parser_error_bad_type.mp) | Invalid type keyword `let foo x = 5` | Syntax Error |
+
+**Lexer errors**
+
+| File | What it tests | Expected error |
+|---|---|---|
+| [`lexer_error_unterminated_string.mp`](code_examples/lexer_error_unterminated_string.mp) | String missing closing `"` | Lexer Error |
+| [`lexer_error_bad_number.mp`](code_examples/lexer_error_bad_number.mp) | Number with two decimal points `1.2.3` | Lexer Error |
+| [`lexer_error_unknown_char.mp`](code_examples/lexer_error_unknown_char.mp) | Unrecognized character `@` | Lexer Error |
+
+#### Stricter Validation
+
+As part of Phase 1 completion, the compiler now enforces stricter rules at every stage:
+
+**Lexer**
+
+- Unterminated string literals raise a dedicated lexer error with the line number.
+- Unterminated or multi-character char literals raise a dedicated lexer error.
+- Numeric literals with more than one decimal point (e.g. `1.2.3`) raise a dedicated lexer error.
+- Any unrecognized character (e.g. `@`, `#`, `!`) raises a lexer error with line and column instead of being silently skipped.
+
+**Parser**
+
+- `let` declarations require an explicit type keyword (`int`, `num`, or `str`). Any other token after `let` raises a syntax error with the line number.
+
+**Semantic Analyzer**
+
+- When a type-mismatch assignment is rejected, the error message includes the expected type and a hint to use the appropriate UOM conversion (e.g. `.int`).
+- Binary operations guard against operands whose type could not be resolved, producing a clear error rather than a confusing `None` comparison.
+- Literal nodes with unrecognized token types raise an explicit semantic error instead of returning `None` silently.
+
+**Code Generator**
+
+- AST node types without a registered generator raise a `Code Generation Error` instead of being silently skipped. This makes it impossible for a new AST node to be added without also adding its generator.
 
 ### Phase 2: Control Flow
 
