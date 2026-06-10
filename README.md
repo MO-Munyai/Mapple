@@ -752,8 +752,9 @@ Runtime errors from generated Python are not wrapped in a Mapple-specific diagno
 
 - Declaration works.
 - Initialization works for supported expression types.
-- Assignment parsing is only a placeholder. `age = 20;` returns a string representation instead of a real assignment AST node.
-- The code generator ignores unknown placeholder nodes, so assignment is not functionally implemented.
+- Assignment parsing is implemented and produces a real `AssignmentNode`.
+- Declaration-before-assignment is enforced by the semantic analyzer.
+- Assignment type compatibility and code generation are still pending.
 - Uninitialized variables generate `None`, even when declared as `int`, `num`, or `str`.
 - There is no runtime enforcement after code generation.
 
@@ -820,7 +821,7 @@ Runtime errors from generated Python are not wrapped in a Mapple-specific diagno
 - There is no standalone binary output.
 - There is no source map from generated Python back to Mapple lines.
 - Unknown AST nodes are silently ignored by `generic_visit`.
-- Placeholder parser outputs for classes, functions, and assignments are ignored.
+- Placeholder parser outputs for classes and functions are ignored. Assignments now have a real AST node and semantic validation hook.
 - Generated files are written beside the source file and can overwrite previous generated output with the same name.
 
 ### CLI And Installation
@@ -885,21 +886,20 @@ Current state:
 let int age = 21;
 ```
 
-- Plain assignment is only partially parsed:
+- Plain assignment parses into a real AST node:
 
 ```mapple
 age = 22;
 ```
 
-- The parser currently returns a string placeholder for assignments instead of a real AST node.
-- The semantic analyzer does not validate assignment target existence or assignment value type.
-- The code generator does not emit Python assignment code for reassignment.
+- The parser produces `AssignmentNode` objects.
+- The semantic analyzer now rejects assignment to undeclared names.
+- The code generator still does not emit Python assignment code for reassignment.
 
 Completion criteria:
 
-- Add a real `AssignmentNode`.
-- Parse `name = expression;` into that node.
-- Require the assignment target to already be declared.
+- `AssignmentNode` exists and the parser emits it.
+- The assignment target must already be declared.
 - Require assigned value type to match the declared variable type.
 - Generate Python assignment output.
 - Add examples showing valid assignment and rejected type mismatch.

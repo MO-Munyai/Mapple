@@ -71,6 +71,15 @@ class SemanticAnalyzer:
             raise Exception(f"Semantic Error: Variable '{node.name}' used before declaration.")
         return var_type
 
+    def visit_AssignmentNode(self, node):
+        # Enforce declaration-before-assignment before walking the value.
+        target_type = self.symbol_table.lookup(node.name)
+        if not target_type:
+            raise Exception(f"Semantic Error: Variable '{node.name}' assigned before declaration.")
+
+        self.visit(node.value)
+        return target_type
+
     def visit_BinaryOpNode(self, node):
         left_type = self.visit(node.left)
         right_type = self.visit(node.right)
