@@ -19,6 +19,7 @@ def run_compiler():
     if "--doctor" in args:
         print(f"\n🍎 Mapple Diagnostic Tool (v{VERSION})")
         print("-------------------------------")
+        
         print(f"Python Path:    {sys.executable}")
         print(f"Python Version: {sys.version.split()[0]}")
         print(f"Compiler Dir:   {os.path.dirname(os.path.abspath(__file__))}")

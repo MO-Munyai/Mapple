@@ -1,35 +1,892 @@
-# 🍎 Mapple (MPPL) v0.1
-**A beginner-friendly, strictly-typed compiled language.**
+# Mapple (MPPL) v0.2.0
 
-Mapple is designed to teach programming fundamentals by enforcing good habits (like mandatory variable declarations and no implicit type conversions) while keeping a clean, Python-inspired syntax.
+Mapple is a small, beginner-oriented compiled language that currently transpiles `.mp` source files into Python and then executes the generated Python with the same interpreter that launched the compiler.
 
-## 🚀 Quick Start (Installation)
-1. **Download**: Clone this repository to your computer.
-## 📋 Requirements
-- **Python 3.10 or higher**: Must be installed and added to your system PATH.
+The implementation is intentionally strict: variables must be declared before use, declared types are checked during semantic analysis, and mixed-type operations require explicit conversion through Mapple's dot-style conversion syntax such as `.str`, `.int`, and `.num`.
 
-### Windows
-1. **Set PATH**: 
-   - Copy the full path to this `MPPL` folder.
-   - Add it to your System **Environment Variables (PATH)**.
+This repository is an early compiler implementation, not a production language runtime. The core pipeline exists and works for the supported subset, but several language constructs are still placeholders or partially implemented.
 
-### macOS / Linux
-1. Open terminal in the `MPPL` folder.
-2. Run `chmod +x mppl`.
-3. Add the folder to your path in `.zshrc` or `.bashrc`.
-4. Run `./mppl script.mp`.
+## Current Version
 
-3. **Verify**: Open a new terminal and type `mppl`.
+The active compiler version is `0.2.0`.
 
-## ✍️ Your First Script (`hello.mp`)
-Create a file named `hello.mp`:
-```mapple
-let str name = input("What is your name? ").str;
-print("Hello " + name);
+The version is defined in [`src/main.py`](src/main.py):
+
+```python
+VERSION = "0.2.0"
 ```
 
-4. **Run `mppl script.mp`.** 
-_________________________________________________________________________________________
+You can verify it with:
 
-# If something breaks run:
-- mppl --doctor
+```powershell
+python src\main.py --version
+```
+
+Or, after installing the launcher on your PATH:
+
+```powershell
+mppl --version
+```
+
+Expected output:
+
+```text
+Mapple Compiler v0.2.0
+```
+
+## Requirements
+
+- Python 3.10 or newer.
+- A terminal that can run either the Windows batch launcher or the Unix-style shell launcher.
+- No third-party Python packages are required.
+
+The compiler uses only the Python standard library:
+
+- `sys`
+- `os`
+- `subprocess`
+- `enum`
+
+## Repository Layout
+
+```text
+Mapple/
+  README.md
+  install.bat
+  mppl.bat
+  mppl
+  setup_mac.sh
+  code_examples/
+    hello_world.mp
+    hello_mapple.mp
+    test_file.mp
+  Documentation/
+    Input Method.txt
+    MPPL Spec Doc.docx
+    Roadmap.md
+    notes_and_bugs_and updates_and_stuff.md
+    struc.txt
+    test.mp
+    test_file_mp.txt
+  src/
+    ast_nodes.py
+    code_generator.py
+    lexer.py
+    main.py
+    parser.py
+    semantic_analyzer.py
+    tokens.py
+```
+
+Important paths:
+
+- [`src/main.py`](src/main.py) is the CLI entry point and compiler pipeline coordinator.
+- [`src/lexer.py`](src/lexer.py) converts raw source text into tokens.
+- [`src/tokens.py`](src/tokens.py) defines token types and token metadata.
+- [`src/parser.py`](src/parser.py) builds the current AST representation.
+- [`src/ast_nodes.py`](src/ast_nodes.py) defines concrete AST node classes.
+- [`src/semantic_analyzer.py`](src/semantic_analyzer.py) performs declaration and type checks.
+- [`src/code_generator.py`](src/code_generator.py) emits Python code.
+- [`code_examples/`](code_examples) contains runnable sample `.mp` programs.
+- [`Documentation/Roadmap.md`](Documentation/Roadmap.md) contains the historical phase roadmap.
+
+## How To Run
+
+### Run Without Installing
+
+From the project directory:
+
+```powershell
+python src\main.py code_examples\hello_world.mp
+```
+
+On macOS or Linux:
+
+```bash
+python3 src/main.py code_examples/hello_world.mp
+```
+
+When run normally, the compiler:
+
+1. Reads the `.mp` file.
+2. Lexes the source into tokens.
+3. Parses the tokens into AST nodes.
+4. Runs semantic validation.
+5. Generates Python code.
+6. Writes a generated Python file next to the input file.
+7. Executes that generated Python file.
+
+For example:
+
+```powershell
+python src\main.py code_examples\hello_world.mp
+```
+
+Creates:
+
+```text
+code_examples\hello_world_output.py
+```
+
+Then executes it.
+
+### Show Generated Python Without Writing An Output File
+
+Use `--show-python` when you want to inspect the generated Python:
+
+```powershell
+python src\main.py code_examples\hello_mapple.mp --show-python
+```
+
+Example generated output:
+
+```python
+name = "Mapple"
+version = "v0.2.0"
+print(("Current " + (str(name) + (" version is " + str(version)))))
+```
+
+This mode returns after printing the generated Python and does not write or execute an output file.
+
+### Windows Launcher
+
+The Windows launcher is [`mppl.bat`](mppl.bat):
+
+```bat
+@echo off
+python "%~dp0src\main.py" %*
+```
+
+After the project directory is on your PATH, run:
+
+```powershell
+mppl code_examples\hello_world.mp
+mppl --version
+mppl --doctor
+```
+
+### Windows Install Script
+
+Run:
+
+```powershell
+.\install.bat
+```
+
+The installer:
+
+1. Checks that `python` is available.
+2. Checks for an existing `mppl --version`.
+3. Adds the current project directory to the user PATH using `setx`.
+4. Asks you to restart the terminal so PATH changes apply.
+
+Important limitation: `setx PATH "%PATH%;%CURRENT_DIR%"` writes the expanded current PATH back to the user PATH. On Windows, this can duplicate entries and may be affected by PATH length limits. Review your PATH if you use the installer repeatedly.
+
+### macOS / Linux Launcher
+
+The Unix-style launcher is [`mppl`](mppl):
+
+```bash
+#!/bin/zsh
+python3 "$(dirname "$0")/src/main.py" "$@"
+```
+
+Make it executable:
+
+```bash
+chmod +x ./mppl
+```
+
+Then run:
+
+```bash
+./mppl code_examples/hello_world.mp
+```
+
+### macOS Setup Script
+
+Run:
+
+```bash
+./setup_mac.sh
+```
+
+The script:
+
+1. Checks for `python3`.
+2. Marks `./mppl` executable.
+3. Adds the current directory to `.zshrc` or `.bash_profile` if it is not already in PATH.
+
+The project notes still list "fix the mac setup and files" as an outstanding item, so treat this script as useful but not heavily validated.
+
+## CLI Reference
+
+```text
+mppl <filename>.mp [--show-python]
+mppl --version
+mppl --doctor
+```
+
+### `mppl <filename>.mp`
+
+Compiles and runs a Mapple source file.
+
+Example:
+
+```powershell
+mppl code_examples\test_file.mp
+```
+
+Output behavior:
+
+- Writes generated Python to `<filename>_output.py`.
+- Runs the generated file with `sys.executable`.
+- Prints an execution failure message if the generated Python exits with a non-zero code.
+
+### `mppl <filename>.mp --show-python`
+
+Prints the generated Python code and exits before writing or executing an output file.
+
+### `mppl --version`
+
+Prints the compiler version.
+
+### `mppl --doctor`
+
+Prints diagnostic information:
+
+- Python executable path.
+- Python version.
+- Compiler directory.
+- Platform string.
+
+Known issue: on some Windows terminals using legacy encodings such as `cp1252`, `--doctor` can crash while printing emoji characters with a `UnicodeEncodeError`. Setting UTF-8 output or removing emoji from the CLI strings would fix this.
+
+## Language Features Currently Implemented
+
+### Comments
+
+Single-line comments start with `//`:
+
+```mapple
+// This is a comment
+print("Hello World");
+```
+
+Block comments are not implemented.
+
+### Statement Terminators
+
+Most supported statements use `;`:
+
+```mapple
+let str name = "Mapple";
+print(name);
+```
+
+The parser is currently permissive in several places and may accept missing semicolons before EOF or before another parse boundary. This is not a fully enforced grammar rule yet.
+
+### Variable Declarations
+
+Variables are declared with:
+
+```mapple
+let <type> <name> = <expression>;
+```
+
+Examples:
+
+```mapple
+let str name = "Mapple";
+let int age = 21;
+let num weight = 72.5;
+```
+
+Declarations without initializers are accepted by the parser and generated as Python `None`:
+
+```mapple
+let int age;
+```
+
+Generated Python:
+
+```python
+age = None
+```
+
+However, because semantic analysis compares initializer types only when an initializer exists, an uninitialized typed variable does not currently receive runtime type enforcement.
+
+### Primitive Types
+
+The current implementation recognizes these type keywords:
+
+- `int`
+- `num`
+- `str`
+
+The token and semantic layers also contain partial references to:
+
+- `char`
+- `bool`
+
+But `char` and `bool` are not complete language features. `char` literals can be tokenized and semantically mapped, but `char` is not accepted as a declaration type keyword by the lexer. `bool` appears in conversion rules but does not have lexer, parser, literal, or generator support.
+
+### Literals
+
+Implemented literals:
+
+```mapple
+42
+3.14
+"hello"
+'x'
+```
+
+Important details:
+
+- Integer literals become `INT_LIT`.
+- Decimal literals become `NUM_LIT`.
+- Double-quoted strings become `STR_LIT`.
+- Single-quoted characters become `CHAR_LIT`.
+- Escape sequences are not implemented for strings or chars.
+- Unterminated strings and chars are not reported with dedicated errors.
+- Numeric scanning allows repeated dots, so malformed input like `1.2.3` can tokenize as a numeric literal and fail later or generate invalid Python.
+
+### Print
+
+`print` is implemented as a language keyword:
+
+```mapple
+print("Hello World");
+```
+
+Generated Python:
+
+```python
+print("Hello World")
+```
+
+`print` can receive any expression that passes semantic analysis.
+
+### Input
+
+`input` is implemented as a built-in call recognized by semantic analysis and code generation:
+
+```mapple
+let str name = input("Enter your name: ").str;
+let int age = input("Enter your age: ").int;
+let num weight = input("Enter your weight: ").num;
+```
+
+Generated Python:
+
+```python
+name = str(input("Enter your name: "))
+age = int(input("Enter your age: "))
+weight = float(input("Enter your weight: "))
+```
+
+Current behavior:
+
+- `input(...)` semantically returns `str`.
+- Conversions are expressed through member access such as `.int`, `.num`, and `.str`.
+- Invalid user input is handled by Python at runtime, not by Mapple. For example, entering `abc` for `.int` raises Python's `ValueError`.
+
+### Explicit Type Conversion
+
+Mapple uses dot-style conversion syntax:
+
+```mapple
+age.str
+input("Age: ").int
+input("Weight: ").num
+```
+
+The generator maps these conversions to Python wrappers:
+
+```python
+str(age)
+int(input("Age: "))
+float(input("Weight: "))
+```
+
+Current generated mappings:
+
+- `.int` -> `int(...)`
+- `.num` -> `float(...)`
+- `.str` -> `str(...)`
+
+The semantic analyzer is designed to reject unsupported conversions before code generation.
+
+### String Concatenation And Addition
+
+The `+` operator is implemented for matching types:
+
+```mapple
+let str name = "Mapple";
+let str version = "v0.2.0";
+
+print("Current " + name.str + " version is " + version.str);
+```
+
+Supported semantic combinations:
+
+- `str + str` returns `str`
+- `int + int` returns `int`
+- `num + num` returns `num`
+
+Mixed-type addition is rejected. For example:
+
+```mapple
+let int age = 21;
+print("Age: " + age);
+```
+
+This fails because `str + int` is not allowed. Use:
+
+```mapple
+print("Age: " + age.str);
+```
+
+### Declaration Before Use
+
+Variables must be declared before they are read:
+
+```mapple
+print(name); // semantic error
+let str name = "Mapple";
+```
+
+The semantic analyzer stores declared names in a symbol table and rejects unknown variable access.
+
+### Duplicate Declaration Checks
+
+Declaring the same variable name twice in the same current global symbol table is rejected:
+
+```mapple
+let str name = "A";
+let str name = "B"; // semantic error
+```
+
+There is no lexical scope model yet, so all currently analyzed declarations share one symbol table.
+
+## Compiler Architecture
+
+The compiler is a direct multi-phase pipeline coordinated by `run_compiler()` in [`src/main.py`](src/main.py).
+
+### 1. CLI And File Loading
+
+`main.py` reads command-line arguments from `sys.argv`.
+
+Special commands:
+
+- `--version`
+- `--doctor`
+
+Compilation mode expects the first argument to be a source file path. The source file is read into a single string before compilation.
+
+### 2. Lexical Analysis
+
+Implemented in [`src/lexer.py`](src/lexer.py).
+
+The lexer scans the source character by character and emits `Token` objects. Each token records:
+
+- token type
+- token value
+- source line
+- source column
+
+The lexer handles:
+
+- whitespace skipping
+- line tracking
+- `//` comments
+- string literals
+- char literals
+- integer and decimal number literals
+- identifiers
+- keywords
+- basic operators and punctuation
+- greedy scanning for `::` and `;;`
+
+Keyword mapping:
+
+```python
+{
+    "let": TokenType.LET,
+    "func": TokenType.FUNC,
+    "class": TokenType.CLASS,
+    "print": TokenType.PRINT,
+    "input": TokenType.INPUT,
+    "return": TokenType.RETURN,
+    "int": TokenType.INT_TYPE,
+    "num": TokenType.NUM_TYPE,
+    "str": TokenType.STR_TYPE,
+}
+```
+
+One important implementation detail: when an identifier appears after a dot, it is forced to `ID` rather than being treated as a keyword. This allows conversion syntax like:
+
+```mapple
+age.str
+```
+
+Without that rule, `str` would become `STR_TYPE` and member access parsing would fail.
+
+### 3. Token Model
+
+Implemented in [`src/tokens.py`](src/tokens.py).
+
+`TokenType` is an `Enum` with categories for:
+
+- keywords and types
+- literals
+- operators and symbols
+- block delimiters
+- parentheses
+- EOF
+
+The token set is larger than the currently supported parser and lexer behavior. For example, `MINUS`, `MUL`, and `MOD` exist in `TokenType`, but the lexer does not currently emit them.
+
+### 4. Parsing
+
+Implemented in [`src/parser.py`](src/parser.py).
+
+The parser is a recursive descent parser. Its `parse()` method reads statements until EOF and returns a list of AST nodes.
+
+Currently parsed concrete AST nodes:
+
+- `VarDeclNode`
+- `PrintNode`
+- `LiteralNode`
+- `VarAccessNode`
+- `BinaryOpNode`
+- `CallNode`
+- `MemberAccessNode`
+
+Partially parsed placeholders:
+
+- classes
+- functions
+- assignments
+
+Classes and functions currently return string placeholders like:
+
+```text
+ClassNode(Name, Body: ...)
+FuncNode(Name, Body: ...)
+```
+
+Those placeholders are ignored by semantic analysis and code generation because they are not real AST node types.
+
+### 5. AST Nodes
+
+Implemented in [`src/ast_nodes.py`](src/ast_nodes.py).
+
+The current AST model separates:
+
+- expressions: literals, variable access, binary operations, calls, member access
+- statements: variable declarations and print calls
+
+The AST is intentionally small. It is enough for the current language subset but not yet expressive enough for full control flow, scoped functions, classes, return statements, or assignments.
+
+### 6. Semantic Analysis
+
+Implemented in [`src/semantic_analyzer.py`](src/semantic_analyzer.py).
+
+Semantic analysis walks the AST before code generation and enforces the current static rules:
+
+- variables must be declared before use
+- variable names cannot be redeclared in the same symbol table
+- initializer expression type must match declared variable type
+- `+` only works on matching `str`, `int`, or `num` operands
+- numeric operators require matching numeric types
+- member conversion must be valid according to the conversion table
+- `input(...)` returns `str`
+- `print(...)` accepts any valid expression
+
+The symbol table is currently a single dictionary:
+
+```python
+{
+    "<variable_name>": "<type>"
+}
+```
+
+There is no nested scope, function scope, class scope, import scope, or module boundary yet.
+
+### 7. Code Generation
+
+Implemented in [`src/code_generator.py`](src/code_generator.py).
+
+The code generator walks the semantically valid AST and emits Python source text.
+
+Current generation examples:
+
+Mapple:
+
+```mapple
+let str name = "Mapple";
+print("Hello " + name.str);
+```
+
+Python:
+
+```python
+name = "Mapple"
+print(("Hello " + str(name)))
+```
+
+Generation is intentionally direct. There is no bytecode, VM, optimizer, linker, package system, or standalone executable output.
+
+### 8. Output And Execution
+
+In normal mode, `main.py` writes generated Python next to the input file:
+
+```text
+<source_name>_output.py
+```
+
+It then executes that file using:
+
+```python
+subprocess.run([sys.executable, output_file])
+```
+
+This means Mapple programs run with the same Python interpreter used to launch the compiler.
+
+## Current Examples
+
+### Hello World
+
+[`code_examples/hello_world.mp`](code_examples/hello_world.mp):
+
+```mapple
+print("Hello World");
+```
+
+### Version Example
+
+[`code_examples/hello_mapple.mp`](code_examples/hello_mapple.mp):
+
+```mapple
+let str name = "Mapple";
+let str version = "v0.2.0";
+
+print("Current " + name.str + " version is " + version.str);
+```
+
+### Input And Conversion Example
+
+[`code_examples/test_file.mp`](code_examples/test_file.mp):
+
+```mapple
+let str name = input("Enter your name: ").str;
+
+let str surname = input("Enter your surname: ").str;
+
+let int age = input("Enter your age: ").int;
+
+let num weight = input("Enter your weight: ").num;
+
+print("Hello " + name.str + " " + surname);
+print("You are " + age.str + " years old.");
+print("You weigh " + weight.str + " kgs");
+```
+
+Generated Python in `--show-python` mode:
+
+```python
+name = str(input("Enter your name: "))
+surname = str(input("Enter your surname: "))
+age = int(input("Enter your age: "))
+weight = float(input("Enter your weight: "))
+print(("Hello " + (str(name) + (" " + surname))))
+print(("You are " + (str(age) + " years old.")))
+print(("You weigh " + (str(weight) + " kgs")))
+```
+
+## Error Handling
+
+Compiler errors are currently caught by a broad exception handler in `main.py`:
+
+```text
+COMPILER ERROR: <message>
+```
+
+The lexer records line and column metadata, and parser errors include token values in some cases, but diagnostics are not yet consistently source-span based.
+
+Examples of current errors:
+
+- syntax errors from unexpected tokens
+- semantic errors for undeclared variables
+- semantic errors for duplicate declarations
+- type mismatch errors
+- unsupported member conversion errors
+- Python runtime errors from generated code
+
+Runtime errors from generated Python are not wrapped in a Mapple-specific diagnostic system.
+
+## Limitations And Known Gaps
+
+### Language Surface
+
+- No `if` statements.
+- No `else` statements.
+- No `while` loops.
+- No `for` loops.
+- No arrays or lists.
+- No dictionaries or maps.
+- No imports or modules.
+- No package system.
+- No user-defined operators.
+- No boolean literals.
+- No comparison operators.
+- No logical operators.
+- No unary operators.
+- No string interpolation.
+- No multiline strings.
+- No block comments.
+
+### Variables And Assignment
+
+- Declaration works.
+- Initialization works for supported expression types.
+- Assignment parsing is only a placeholder. `age = 20;` returns a string representation instead of a real assignment AST node.
+- The code generator ignores unknown placeholder nodes, so assignment is not functionally implemented.
+- Uninitialized variables generate `None`, even when declared as `int`, `num`, or `str`.
+- There is no runtime enforcement after code generation.
+
+### Functions
+
+- `func` is tokenized and partially parsed.
+- Function parameters are not implemented.
+- Function calls are only meaningfully implemented for built-in `input`.
+- `return` is tokenized but not parsed or generated.
+- Parsed functions are placeholder strings, not real AST nodes.
+- Function bodies are not emitted as Python functions.
+- There is no function scope.
+
+### Classes
+
+- `class`, `::`, and `;;` are tokenized.
+- Class blocks are partially parsed.
+- Parsed classes are placeholder strings, not real AST nodes.
+- Class bodies are not semantically modeled.
+- Class definitions are not emitted as Python classes.
+- There is no object construction, field access, method dispatch, inheritance, or visibility model.
+
+### Arithmetic
+
+- `+` is lexed, parsed, semantically checked, and generated.
+- `-`, `*`, and `%` exist as token types but are not emitted by the lexer.
+- `/` is emitted by the lexer and has semantic rules, but the parser does not currently parse it as a binary operator.
+- Operator precedence is not implemented. `+` parsing is recursive and right-associative.
+- Parenthesized expressions are not implemented except for function and print call syntax.
+
+### Type System
+
+- The current type system is intentionally simple and global.
+- Only `int`, `num`, and `str` are usable declaration types.
+- `char` has partial literal support but incomplete declaration support.
+- `bool` appears in conversion tables but is not otherwise implemented.
+- There is no inference.
+- There are no nullable rules.
+- There are no generics.
+- There are no user-defined types.
+- There is no separate compile-time representation for functions or classes.
+
+### Conversion Model
+
+- `.int`, `.num`, and `.str` generate Python casts.
+- Invalid casts fail at Python runtime rather than through Mapple-specific runtime errors.
+- The semantic conversion table currently appears directionally inconsistent. For example, the analyzer checks `method in self.valid_methods and obj_type in self.valid_methods[method]`, even though the table is shaped as source type to allowed target methods. The currently common examples still work, but the implementation should be reviewed before expanding conversion behavior.
+
+### Lexer And Parser Robustness
+
+- Strings do not support escape sequences.
+- Unterminated strings do not raise a dedicated lexer error.
+- Unterminated chars do not raise a dedicated lexer error.
+- Unknown characters are silently ignored if no branch handles them.
+- The lexer only starts identifiers with alphabetic characters, not underscores.
+- The lexer allows underscores after the first identifier character.
+- Numeric scanning accepts any number of dots.
+- Error recovery is not implemented. The compiler stops at the first raised exception.
+- Several parser docstrings contain stale citation markers.
+
+### Code Generation
+
+- Code generation targets Python source only.
+- There is no standalone binary output.
+- There is no source map from generated Python back to Mapple lines.
+- Unknown AST nodes are silently ignored by `generic_visit`.
+- Placeholder parser outputs for classes, functions, and assignments are ignored.
+- Generated files are written beside the source file and can overwrite previous generated output with the same name.
+
+### CLI And Installation
+
+- The CLI catches all exceptions and prints only the exception message.
+- `--doctor` can fail on Windows consoles that cannot encode emoji.
+- `install.bat` modifies user PATH with `setx`, which may duplicate entries or hit Windows PATH length behavior.
+- The macOS setup script is noted in project docs as needing fixes.
+- The Unix launcher uses `#!/bin/zsh`, so systems without `zsh` should invoke the compiler with `python3 src/main.py` or adjust the shebang.
+
+### Testing
+
+- There is no automated test suite in the repository.
+- Current validation is manual through sample `.mp` files and `--show-python`.
+- There are no lexer unit tests, parser unit tests, semantic analyzer tests, code generator tests, or CLI integration tests.
+- There is no CI configuration.
+
+## Development Notes
+
+Useful manual checks:
+
+```powershell
+python src\main.py --version
+python src\main.py code_examples\hello_world.mp --show-python
+python src\main.py code_examples\hello_mapple.mp --show-python
+python src\main.py code_examples\test_file.mp --show-python
+```
+
+Running without `--show-python` writes generated files:
+
+```powershell
+python src\main.py code_examples\hello_world.mp
+```
+
+This creates or overwrites:
+
+```text
+code_examples\hello_world_output.py
+```
+
+## Practical Roadmap
+
+The next high-value engineering work is:
+
+1. Add an automated test suite for lexer, parser, semantic analyzer, generator, and CLI behavior.
+2. Replace placeholder strings for classes, functions, and assignments with real AST nodes.
+3. Implement assignment end to end.
+4. Add proper source diagnostics with line and column reporting throughout all phases.
+5. Fix conversion table direction and add tests for every allowed and rejected conversion.
+6. Decide whether semicolons are mandatory and enforce that rule consistently.
+7. Implement operator precedence and the remaining arithmetic operators.
+8. Remove emoji from CLI output or explicitly configure UTF-8-safe output.
+9. Harden install scripts to avoid PATH duplication and shell-specific assumptions.
+10. Add scoped symbol tables before implementing real functions and classes.
+
+## Project Status
+
+Mapple v0.2.0 is best understood as a working educational compiler prototype for a small strict subset:
+
+- variable declarations
+- string, integer, and decimal literals
+- print
+- input
+- explicit conversion
+- simple `+` expressions
+- declaration-before-use checking
+- basic Python transpilation and execution
+
+It is not yet a complete general-purpose language. The compiler pipeline is in place, which gives the project a solid base for incremental language work, but many syntax forms exposed by the token set and documentation still need real AST, semantic, and code generation support.
