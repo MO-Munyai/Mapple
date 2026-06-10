@@ -114,7 +114,12 @@ class Parser:
             self.eat(TokenType.ASSIGN)
             right = self.parse_expression()
             if not isinstance(left, VarAccessNode):
-                raise Exception(f"Syntax Error: Invalid assignment target '{left}'")
+                raise Exception(
+                    f"Syntax Error: Invalid assignment target '{left}'. "
+                    "The left side of an assignment must be a variable name."
+                )
+            if isinstance(right, AssignmentNode):
+                raise Exception("Syntax Error: Chained assignment is not supported.")
             return AssignmentNode(left.name, right)
         
         if self.peek().type == TokenType.PLUS:
