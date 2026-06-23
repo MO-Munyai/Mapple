@@ -294,14 +294,14 @@ Block comments are not implemented.
 
 ### Statement Terminators
 
-Most supported statements use `;`:
+Every statement requires a `;` terminator:
 
 ```mapple
 let str name = "Mapple";
 print(name);
 ```
 
-The parser is currently permissive in several places and may accept missing semicolons before EOF or before another parse boundary. This is not a fully enforced grammar rule yet.
+Semicolons are mandatory. A missing `;` is a hard syntax error at the parser stage.
 
 ### Variable Declarations
 
@@ -319,7 +319,7 @@ let int age = 21;
 let num weight = 72.5;
 ```
 
-Declarations without initializers are accepted by the parser and generated as Python `None`:
+Declarations without initializers are accepted by the parser:
 
 ```mapple
 let int age;
@@ -331,7 +331,14 @@ Generated Python:
 age = None
 ```
 
-However, because semantic analysis compares initializer types only when an initializer exists, an uninitialized typed variable does not currently receive runtime type enforcement.
+However, any attempt to read `age` before assigning it a value is a **semantic error**:
+
+```mapple
+let int age;
+print(age);  // Semantic Error: Variable 'age' is declared but has no value.
+```
+
+The first successful assignment marks the variable as initialized and allows it to be read.
 
 ### Primitive Types
 
@@ -346,7 +353,7 @@ The token and semantic layers also contain partial references to:
 - `char`
 - `bool`
 
-But `char` and `bool` are not complete language features. `char` literals can be tokenized and semantically mapped, but `char` is not accepted as a declaration type keyword by the lexer. `bool` appears in conversion rules but does not have lexer, parser, literal, or generator support.
+`char` is not accepted as a declaration type keyword, but `char` literals (`'x'`) are fully supported as expressions — they lex, parse, and pass semantic analysis as type `char`. `bool` appears in UOM conversion rules (`.bool` is a valid conversion) but has no literal syntax, declaration keyword, or standalone type support.
 
 ### Literals
 
@@ -451,8 +458,9 @@ Supported semantic combinations:
 - `str + str` returns `str`
 - `int + int` returns `int`
 - `num + num` returns `num`
+- `int + num` or `num + int` returns `num` (implicit widening — `int` promotes to `num`)
 
-Mixed-type addition is rejected. For example:
+Other mixed-type combinations are rejected. For example:
 
 ```mapple
 let int age = 21;
@@ -614,19 +622,21 @@ Implemented in [`src/semantic_analyzer.py`](src/semantic_analyzer.py).
 Semantic analysis walks the AST before code generation and enforces the current static rules:
 
 - variables must be declared before use
+- variables must be initialized before they are read
 - variable names cannot be redeclared in the same symbol table
-- initializer expression type must match declared variable type
-- `+` only works on matching `str`, `int`, or `num` operands
-- numeric operators require matching numeric types
-- member conversion must be valid according to the conversion table
+- initializer expression type must match declared variable type (`int → num` widening is the only implicit exception)
+- `+` works on matching `str`, `int`, or `num` operands; `int + num` / `num + int` is also valid via widening
+- numeric operators (`-`, `*`, `%`) require matching numeric types or a valid widening
+- member conversion must be valid according to the UOM conversion table
+- scalar types (`int`, `num`, `str`, `char`, `bool`) cannot be called as functions
 - `input(...)` returns `str`
 - `print(...)` accepts any valid expression
 
-The symbol table is currently a single dictionary:
+The symbol table is currently a single dictionary mapping variable names to `(type, is_initialized)` tuples:
 
 ```python
 {
-    "<variable_name>": "<type>"
+    "<variable_name>": ("<type>", True | False)
 }
 ```
 
@@ -772,7 +782,7 @@ Runtime errors from generated Python are not wrapped in a Mapple-specific diagno
 - Declaration-before-assignment is enforced: assigning to an undeclared name is a semantic error.
 - Assignment type compatibility is enforced: the right-hand side must match the declared type.
 - Assignment code generation emits a Python assignment statement.
-- Uninitialized variables (`let int x;`) generate `None` in Python; they can be assigned before first use without error.
+- Uninitialized variables (`let int x;`) generate `None` in Python. Reading one before its first assignment is a semantic error. Assigning to it marks it as initialized and allows subsequent reads.
 - Chained assignment (`a = b = 5`) is rejected by the parser.
 - The left-hand side of an assignment must be a plain variable name; using a literal or expression on the left is a syntax error.
 - There is no runtime type enforcement after code generation.
@@ -808,7 +818,7 @@ Runtime errors from generated Python are not wrapped in a Mapple-specific diagno
 
 - The current type system is intentionally simple and global.
 - Only `int`, `num`, and `str` are usable declaration types.
-- `char` has partial literal support but incomplete declaration support.
+- `char` literals are fully usable in expressions but `char` is not a valid declaration type keyword.
 - `bool` appears in conversion tables but is not otherwise implemented.
 - There is no inference.
 - There are no nullable rules.
@@ -820,7 +830,7 @@ Runtime errors from generated Python are not wrapped in a Mapple-specific diagno
 
 - `.int`, `.num`, and `.str` generate Python casts.
 - Invalid casts fail at Python runtime rather than through Mapple-specific runtime errors.
-- The semantic conversion table currently appears directionally inconsistent. For example, the analyzer checks `method in self.valid_methods and obj_type in self.valid_methods[method]`, even though the table is shaped as source type to allowed target methods. The currently common examples still work, but the implementation should be reviewed before expanding conversion behavior.
+- Invalid casts are caught at semantic analysis and produce a clear error before code generation.
 
 ### Lexer And Parser Robustness
 
@@ -1156,8 +1166,8 @@ These items support the six focused phases and should be handled when they becom
 1. Add automated tests for lexer, parser, semantic analyzer, generator, and CLI behavior.
 2. Replace placeholder parser outputs with real AST nodes.
 3. Add proper source diagnostics with line and column reporting throughout all compiler phases.
-4. Fix conversion table direction and add tests for every allowed and rejected conversion.
-5. Decide whether semicolons are mandatory and enforce that rule consistently.
+4. ~~Fix conversion table direction~~ — done (BUG-07). Add tests for every allowed and rejected conversion.
+5. ~~Decide whether semicolons are mandatory~~ — done (BUG-15). Semicolons are now mandatory on every statement.
 6. Implement operator precedence as soon as expressions grow beyond the current simple `+` behavior.
 7. Remove emoji from CLI output or explicitly configure UTF-8-safe output.
 8. Harden install scripts to avoid PATH duplication and shell-specific assumptions.
