@@ -144,7 +144,7 @@ class Parser:
         """Parses base units like literals and function calls."""
         token = self.peek()
         
-        if token.type in [TokenType.INT_LIT, TokenType.STR_LIT, TokenType.NUM_LIT]:
+        if token.type in [TokenType.INT_LIT, TokenType.STR_LIT, TokenType.NUM_LIT, TokenType.CHAR_LIT]:
             return LiteralNode(self.advance())
             
         if token.type in [TokenType.ID, TokenType.INPUT, TokenType.INT_TYPE, TokenType.STR_TYPE]:
