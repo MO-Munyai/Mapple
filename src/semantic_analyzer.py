@@ -146,14 +146,20 @@ class SemanticAnalyzer:
             
         raise Exception(f"Semantic Error: Type {obj_type} has no method .{method}")
 
+    _SCALAR_TYPES = {"int", "num", "str", "char", "bool"}
+
     def visit_CallNode(self, node):
-        """Validates function calls[cite: 26, 31]."""
-        # For v0.1, we assume 'input' always returns a 'str' that needs casting 
         if isinstance(node.callee, VarAccessNode) and node.callee.name == "input":
             return "str"
-        
-        # For other calls, visit the callee to find its type
-        return self.visit(node.callee)
+
+        callee_type = self.visit(node.callee)
+        if callee_type in self._SCALAR_TYPES:
+            callee_name = node.callee.name if isinstance(node.callee, VarAccessNode) else repr(node.callee)
+            raise Exception(
+                f"Semantic Error: '{callee_name}' is of type '{callee_type}' and is not callable. "
+                "Only functions can be called."
+            )
+        return callee_type
 
     def visit_PrintNode(self, node):
         # print() can take any valid expression [cite: 26, 46]
