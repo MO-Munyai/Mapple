@@ -155,7 +155,7 @@ class SemanticAnalyzer:
             return obj_type
         
         # Check if the conversion is allowed in our UOM rules [cite: 84]
-        if method in self.valid_methods and obj_type in self.valid_methods[method]:
+        if obj_type in self.valid_methods and method in self.valid_methods[obj_type]:
             return method
             
         raise Exception(f"Semantic Error: Type {obj_type} has no method .{method}")

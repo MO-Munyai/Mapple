@@ -77,5 +77,7 @@ class CodeGenerator:
             return f"float({obj_code})"
         if method == "str":
             return f"str({obj_code})"
-            
-        return obj_code # Default/No-op
+        if method == "bool":
+            return f"bool({obj_code})"
+
+        return obj_code
