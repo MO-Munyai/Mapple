@@ -134,6 +134,11 @@ class Parser:
         if self.peek().type == TokenType.PLUS:
             op = self.eat(TokenType.PLUS)
             right = self.parse_expression()
+            if isinstance(right, AssignmentNode):
+                raise Exception(
+                    "Syntax Error: Assignment '=' is not allowed inside an arithmetic expression. "
+                    "Move the assignment to its own statement."
+                )
             return BinaryOpNode(left, op, right)
             
         return left
