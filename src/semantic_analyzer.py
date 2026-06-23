@@ -3,14 +3,23 @@ from ast_nodes import *
 
 class SymbolTable:
     def __init__(self):
-        # Maps variable name to its data type
-        self.symbols = {}
+        self.symbols = {}  # name -> (type, is_initialized)
 
-    def define(self, name, symbol_type):
-        self.symbols[name] = symbol_type
+    def define(self, name, symbol_type, initialized=True):
+        self.symbols[name] = (symbol_type, initialized)
 
     def lookup(self, name):
-        return self.symbols.get(name)
+        entry = self.symbols.get(name)
+        return entry[0] if entry else None
+
+    def is_initialized(self, name):
+        entry = self.symbols.get(name)
+        return entry[1] if entry else False
+
+    def mark_initialized(self, name):
+        entry = self.symbols.get(name)
+        if entry:
+            self.symbols[name] = (entry[0], True)
 
 class SemanticAnalyzer:
     def __init__(self):
@@ -48,10 +57,10 @@ class SemanticAnalyzer:
         # 2. If there is an initializer (= value), check type consistency [cite: 28, 51]
         if node.initializer:
             init_type = self.visit(node.initializer)
-            if init_type != node.var_type:
+            if init_type != node.var_type and not self._is_widening(init_type, node.var_type):
                 raise Exception(f"Type Mismatch: Cannot assign {init_type} to {node.var_type} variable '{node.name}'.")
 
-        self.symbol_table.define(node.name, node.var_type)
+        self.symbol_table.define(node.name, node.var_type, initialized=node.initializer is not None)
         return node.var_type
 
     def visit_LiteralNode(self, node):
@@ -70,10 +79,14 @@ class SemanticAnalyzer:
         return result
 
     def visit_VarAccessNode(self, node):
-        # Check declaration before use
         var_type = self.symbol_table.lookup(node.name)
         if not var_type:
             raise Exception(f"Semantic Error: Variable '{node.name}' used before declaration.")
+        if not self.symbol_table.is_initialized(node.name):
+            raise Exception(
+                f"Semantic Error: Variable '{node.name}' is declared but has no value. "
+                f"Assign a value before using it."
+            )
         return var_type
 
     def visit_AssignmentNode(self, node):
@@ -90,13 +103,14 @@ class SemanticAnalyzer:
                 f"Semantic Error: The expression assigned to '{node.name}' "
                 "has no resolvable type. Check the right-hand side expression."
             )
-        if value_type != target_type:
+        if value_type != target_type and not self._is_widening(value_type, target_type):
             raise Exception(
                 f"Type Mismatch: Cannot assign {value_type} to {target_type} "
                 f"variable '{node.name}'. Use a {target_type} expression, "
                 f"or convert with .{target_type}."
             )
 
+        self.symbol_table.mark_initialized(node.name)
         return target_type
 
     def visit_BinaryOpNode(self, node):
@@ -147,6 +161,10 @@ class SemanticAnalyzer:
         raise Exception(f"Semantic Error: Type {obj_type} has no method .{method}")
 
     _SCALAR_TYPES = {"int", "num", "str", "char", "bool"}
+    _ALLOWED_WIDENINGS = {("int", "num")}
+
+    def _is_widening(self, from_type, to_type):
+        return (from_type, to_type) in self._ALLOWED_WIDENINGS
 
     def visit_CallNode(self, node):
         if isinstance(node.callee, VarAccessNode) and node.callee.name == "input":

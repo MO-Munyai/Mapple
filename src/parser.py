@@ -43,8 +43,7 @@ class Parser:
         else:
             # Handle plain assignments like 'age = 20;' or expressions [cite: 59, 60]
             expr = self.parse_expression()
-            if self.peek().type == TokenType.STMT_END:
-                self.eat(TokenType.STMT_END)
+            self.eat(TokenType.STMT_END)
             return expr
 
     def parse_class(self):
@@ -93,9 +92,8 @@ class Parser:
         if self.peek().type == TokenType.ASSIGN:
             self.eat(TokenType.ASSIGN)
             initializer = self.parse_expression()
-            
-        if self.peek().type == TokenType.STMT_END:
-            self.eat(TokenType.STMT_END)
+
+        self.eat(TokenType.STMT_END)
         return VarDeclNode(var_type_token.value, name, initializer)
 
     def parse_print(self):
@@ -104,8 +102,7 @@ class Parser:
         self.eat(TokenType.LPAREN)
         expr = self.parse_expression()
         self.eat(TokenType.RPAREN)
-        if self.peek().type == TokenType.STMT_END:
-            self.eat(TokenType.STMT_END)
+        self.eat(TokenType.STMT_END)
         return PrintNode(expr)
 
     def parse_expression(self):
