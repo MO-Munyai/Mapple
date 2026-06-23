@@ -132,6 +132,8 @@ class SemanticAnalyzer:
                 return "int"
             if left_type == "num" and right_type == "num":
                 return "num"
+            if self._is_widening(left_type, right_type) or self._is_widening(right_type, left_type):
+                return "num"
             raise Exception(
                 f"Semantic Error: Cannot add {left_type} and {right_type}. "
                 "Both sides must be the same type. Use .str to convert first."
@@ -140,6 +142,8 @@ class SemanticAnalyzer:
         if op in [TokenType.MINUS, TokenType.MUL, TokenType.DIV, TokenType.MOD]:
             if left_type == right_type and left_type in ["int", "num"]:
                 return left_type
+            if self._is_widening(left_type, right_type) or self._is_widening(right_type, left_type):
+                return "num"
             raise Exception(
                 f"Semantic Error: Operator '{node.op.value}' requires matching numeric types "
                 f"(int or num), got {left_type} and {right_type}."
